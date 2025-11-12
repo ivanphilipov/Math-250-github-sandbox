@@ -1,0 +1,36 @@
+---
+title: "Class Notes 11.10"
+author: "Ivan Philipov"
+format: html
+embed-resources: true
+---
+
+**ANOVA**
+
+Ho: All group means are the same, : M1=M2=Mk
+Ha: At least one group mean is not the same as the rest.
+
+Idea: Compare the variability of the observed group means, 
+X1, X2, Xk
+with the variability within the groups.
+==> compute an F-statistic and get a p-value
+A low P-value represents evidence against the Ha.
+
+**To do an ANOVA**
+
+1) State the hypotheses
+2) Visualize data
+3) Run the Test using aov()
+4) State a conclusion in ordinary human language. 
+5) Consider which groups might be different
+
+**Assumptions of ANOVA**
+
+1) Observations are independent of one another 
+2) In each group, the qualitative variable is normally-distributed. (Can be broken esp. for large samples)
+3) The variances in group are equal (Can be broken esp. for large samples)
+
+
+
+
+
