@@ -1,0 +1,280 @@
+---
+title: "Midterm 2"
+author: "Ivan Philipov"
+format: html
+embed-recourses: true
+---
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(gt)
+
+summer_school <- read_csv("summer_school.csv")
+cupid <- read_csv("cupid.csv")
+```
+
+
+## Problem 1
+
+```{r}
+#| message: false
+#| warning: false
+
+grades_long <- tibble(
+grade = c(summer_school$term1, 
+          summer_school$term2)
+) %>%
+filter(grade != "NA") %>%
+mutate(grade = factor(grade, 
+                      levels = c("A", "B", "C", "D", "F")))
+
+grade_counts <- grades_long %>%
+group_by(grade) %>%
+summarise(Frequency = n(),
+          .groups = "drop")
+```
+
+```{r}
+#| fig-alt: "Bar chart showing the frequency of each letter grade A, B, C, D, and F."
+#| message: false
+#| warning: false
+
+ggplot(grade_counts, 
+       aes(x = grade, 
+           y = Frequency,
+           fill = grade)) +
+  geom_col() +
+  labs(
+    title   = "Making the grade",
+    x       = "Letter Grade",
+    y       = "Frequency",
+    caption = "Source: grades.xlsx"
+  ) +
+  theme_minimal()
+```
+
+
+## Problem 2
+
+$H_0$:μ=3.1
+$H_A$:μ does not = 3.1
+
+```{r}
+#| fig-alt: "Histogram of GPA with a vertical line at 3.1."
+#| message: false
+#| warning: false
+
+ggplot(summer_school, 
+       aes(x = gpa)) +
+  geom_histogram(binwidth = 0.25,
+                 fill = "grey") +
+  labs(
+    x = "GPA",
+    y = "Count"
+  ) +
+  theme_minimal()
+
+```
+
+
+
+
+```{r}
+summer_school %>%
+  summarise(
+    n        = n(),
+    mean_gpa = mean(gpa),
+    sd_gpa   = sd(gpa)
+  )
+t.test(summer_school$gpa,
+       mu = 3.1)
+```
+Based on the p-value = 0.365, we do not see strong evidence against the school’s claim of a 3.1 average GPA.
+
+
+
+## Problem 3
+
+```{r}
+
+
+term1_data <- summer_school %>%
+filter(term1 != "NA")
+
+term1_number <- nrow(term1_data)
+
+term1_df_rate <- mean(term1_data$term1 %in% c("D", "F"))
+
+
+term2_data <- summer_school %>%
+filter(term2 != "NA")
+
+term2_number <- nrow(term2_data)
+
+term2_df_rate <- mean(term2_data$term2 %in% c("D", "F"))
+
+
+problem3_table <- tibble(
+Term   = c(1, 2),
+Number = c(term1_number, 
+           term2_number),
+`DF Rate` = c(term1_df_rate, 
+              term2_df_rate)
+)
+
+problem3_table %>%
+gt()
+
+```
+
+## Problem 4
+
+```{r}
+cupid_clean <- cupid %>%
+  filter(body_type != "NA", 
+         drugs != "NA")
+
+top5 <- cupid_clean %>%
+  group_by(body_type) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  slice(1:5)
+
+cupid_top <- cupid_clean %>%
+  filter(body_type %in% top5$body_type)
+
+```
+
+```{r}
+body_drug_table <- cupid_top %>%
+  group_by(body_type, 
+           drugs) %>%
+  summarise(count = n(), 
+            .groups = "drop")
+
+body_drug_table %>%
+gt()
+```
+
+
+```{r}
+ggplot(cupid_top, aes(x = body_type, 
+                      fill = drugs)) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Body Type",
+    y = "Count",
+    fill = "Drug Use"
+  ) +
+  theme_minimal()
+```
+
+Looking at both the table and the bar chart, there are some differences in drug use across the five most common body types. Some body types have higher counts of “never” or “sometimes” compared to others. The differences are not extremely large, but the distributions are not identical. This suggests there may be some relationship between body type and drug use
+
+## Problem 5
+
+Is the cupid sample consistent with these population proportions?
+
+3.4% gay
+5.2% bisexual
+91.4% straight
+
+```{r}
+cupid_orient <- cupid %>%
+  filter(orientation %in% c("straight", 
+                            "gay", 
+                            "bisexual"))
+```
+
+
+```{r}
+ggplot(cupid_orient, aes(x = orientation)) +
+  geom_bar(fill = "grey") +
+  labs(
+    x = "Orientation",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+
+
+```{r}
+cupid_clean <- cupid %>%
+  filter(!is.na(orientation))
+
+t <- table(cupid_clean$orientation)
+
+t3 <- t[c("straight", 
+          "gay", 
+          "bisexual")]
+
+p_null <- c(
+  straight = 0.914,
+  gay      = 0.034,
+  bisexual = 0.052
+)
+
+```
+
+```{r}
+chisq.test(t3, p = p_null)
+```
+The p-value from the test is very small, which means the observed data are not consistent with the Gallup proportions. 
+
+## Problem 6
+
+```{r}
+#| message: false
+#| warning: false
+
+
+eth_long <- cupid %>%
+  filter(!is.na(ethnicity)) %>%
+  separate(ethnicity,
+           into = c("eth1", 
+                    "eth2",
+                    "eth3"),
+           sep = ",",
+           fill = "right") %>%
+  pivot_longer(cols = c(eth1, 
+                        eth2, 
+                        eth3), 
+               names_to = "slot",
+               values_to = "eth") %>%
+  filter(!is.na(eth)) %>%
+  mutate(eth = str_trim(eth))
+
+eth_counts <- eth_long %>%
+  count(eth, 
+        sort = TRUE)
+
+top6 <- eth_counts %>%
+  slice_head(n = 6)
+```
+
+```{r}
+#| fig-cap: "Top six ethnicities in the cupid sample."
+#| fig-alt: "Bar plot showing the six most common ethnicities."
+#| message: false
+#| warning: false
+
+ggplot(top6, aes(x = reorder(eth,n), 
+                 y = n)) +
+  geom_col(fill = "grey") +
+  coord_flip() +
+  labs( title = "Most Common Ethnicities",
+    x = "Ethnicity",
+    y = "Count",
+    caption = "Source: cupid.csv"
+  ) +
+  theme_minimal()
+```
+
+The bar chart shows the six most frequently reported ethnicities in the dataset. This gives a quick visual summary of the major groups represented, and helps us understand which identities appear most often among users in this sample.
+
+

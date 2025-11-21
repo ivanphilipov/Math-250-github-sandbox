@@ -1,0 +1,69 @@
+---
+title: "Single Variable Inference"
+author: "Ivan Philipov"
+format: html
+embed-resources: true
+---
+
+```{r}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(gt)
+attrition_small <- read_csv("attrition_small.csv")
+```
+
+**1.) Work Life Balance**
+
+$H_0$: The proportions of employees in each work/life balance category match the company’s claim 10% Best, 65% Better, 20% Good, 5% Bad
+
+$H_a$: The proportions are not the same as the claimed values.
+
+
+```{r}
+#| label: fig-wlb-bar
+#| fig-cap: "Observed Work/Life Balance ratings (n = 250)."
+#| fig-alt: "Bar chart showing counts of Best, Better, Good, and Bad categories."
+
+ggplot(attrition_small, aes(x = WorkLifeBalance)) +
+geom_bar(fill = "skyblue3") +
+labs(title = "Observed Work/Life Balance Ratings",
+x = "Work/Life Balance Category",
+y = "Count") +
+theme_minimal()
+```
+
+```{r}
+t <- table(attrition_small$WorkLifeBalance)
+p_null <- c(0.10, 0.65, 0.20, 0.05)
+chisq.test(t, p = p_null)
+```
+There is strong evidence that the observed distribution of employees’ work/life-balance ratings does not match the company’s claim. In other words, the sample proportions of Best, Better, Good, and Bad differ significantly from the stated 10 %, 65 %, 20 %, 5 %.
+
+**2.) Education Field **
+
+$H_0$: Population proportions match the company’s claim: Life Sciences = 55%, Marketing = 20%, Technical = 20%, Other = 5%.
+
+$H_a$: Population proportions does not match the company’s claim
+
+```{r}
+ggplot(attrition_small, aes(x = EducationField)) +
+  geom_bar(fill = "green") +
+  labs(
+    title = "Education Field Distribution",
+    x = "Education Field",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+t <- table(attrition_small$EducationField)
+p_null <- c(0.55, 0.20, 0.20, 0.05)
+model2 <- chisq.test(t, p = p_null)
+model2
+```
+There is very strong evidence that the sample distribution of employee education fields does not match the company’s claimed proportions.In other words, the observed counts for education fields differ significantly from what the company reported, so the claim is not reasonable given this sample.
+
+
